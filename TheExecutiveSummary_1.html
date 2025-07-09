@@ -1,0 +1,219 @@
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Guide to Copenhagen</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Calm Harmony (Warm neutrals: bg-stone-50, with accent colors like amber and teal for interaction) -->
+    <!-- Application Structure Plan: The application is structured as an interactive dashboard. A top-level filter system allows users to select 'vibes' or 'activities', which dynamically updates a responsive grid of neighborhood cards. This is superior to the original linear document as it empowers users to instantly find locations matching their specific interests, promoting active exploration rather than passive reading. Clicking a card reveals detailed information, maintaining a clean initial view and preventing information overload. -->
+    <!-- Visualization & Content Choices: Report Info -> Neighborhood list & characteristics. Goal -> Allow user-driven exploration. Viz/Presentation -> Interactive filter buttons (HTML/JS) and a dynamic card grid (HTML/CSS/JS). Interaction -> Users click filters to instantly re-render the grid with relevant neighborhoods. Justification -> This is a highly intuitive and efficient way for users to query the content. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8f7f2; }
+        .chart-container { position: relative; width: 100%; max-width: 600px; margin-left: auto; margin-right: auto; height: 350px; max-height: 400px; }
+        @media (min-width: 768px) { .chart-container { height: 400px; } }
+        .card { transition: all 0.3s ease-in-out; }
+        .details-content { max-height: 0; overflow: hidden; transition: max-height 0.5s ease-out; }
+        .details-content.open { max-height: 1000px; transition: max-height 0.7s ease-in; }
+        .filter-btn.active { background-color: #0d9488; color: white; }
+    </style>
+</head>
+<body class="bg-stone-50 text-stone-800">
+
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+
+        <header class="text-center mb-8">
+            <h1 class="text-4xl md:text-5xl font-bold text-teal-800 mb-2">Discover Copenhagen</h1>
+            <p class="text-lg text-stone-600 max-w-3xl mx-auto">An interactive guide to the city's neighborhoods. Select a vibe or activity below to find the perfect places for you.</p>
+        </header>
+
+        <section id="filters" class="mb-10">
+            <div class="flex flex-wrap justify-center gap-2 mb-4">
+                <button data-filter="all" class="filter-btn active font-medium py-2 px-4 rounded-full bg-white shadow-sm hover:bg-teal-100 transition-colors">All Neighborhoods</button>
+                <button data-filter="classic" class="filter-btn font-medium py-2 px-4 rounded-full bg-white shadow-sm hover:bg-teal-100 transition-colors">🏛️ Classic</button>
+                <button data-filter="artsy" class="filter-btn font-medium py-2 px-4 rounded-full bg-white shadow-sm hover:bg-teal-100 transition-colors">🎨 Artsy</button>
+                <button data-filter="edgy" class="filter-btn font-medium py-2 px-4 rounded-full bg-white shadow-sm hover:bg-teal-100 transition-colors"> Edgy</button>
+                <button data-filter="waterside" class="filter-btn font-medium py-2 px-4 rounded-full bg-white shadow-sm hover:bg-teal-100 transition-colors">🌊 Waterside</button>
+                <button data-filter="foodie" class="filter-btn font-medium py-2 px-4 rounded-full bg-white shadow-sm hover:bg-teal-100 transition-colors">🍕 Foodie</button>
+                <button data-filter="swimming" class="filter-btn font-medium py-2 px-4 rounded-full bg-white shadow-sm hover:bg-teal-100 transition-colors">🏊 Swimming</button>
+                 <button data-filter="shopping" class="filter-btn font-medium py-2 px-4 rounded-full bg-white shadow-sm hover:bg-teal-100 transition-colors">🛍️ Shopping</button>
+            </div>
+        </section>
+
+        <section id="neighborhood-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+        </section>
+
+        <footer class="text-center mt-12 py-6 border-t border-stone-200">
+            <p class="text-stone-500">Created to make your trip to Copenhagen unforgettable.</p>
+        </footer>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const neighborhoodData = [
+                {
+                    id: 'indreby',
+                    name: '�🇰 Indre By (City Center / Old Town)',
+                    vibe: 'Classic, historic, photogenic.',
+                    tags: ['classic', 'sightseeing', 'shopping'],
+                    sights: ['Nyhavn', 'Strøget', 'Rosenborg Castle', 'The Round Tower', 'Christiansborg Palace', 'Royal Library Garden'],
+                    food: ['Democratic Coffee', 'Atelier September', 'Huks Fluks'],
+                    activities: ['Canal tour (start at Nyhavn or Gammel Strand)', 'Bike rentals to explore like a local']
+                },
+                {
+                    id: 'christianshavn',
+                    name: '🌊 Christianshavn',
+                    vibe: 'Laid-back, artsy, and waterside.',
+                    tags: ['artsy', 'waterside', 'swimming', 'sightseeing'],
+                    sights: ['Christiania', 'Church of Our Saviour', 'Canals & Boats'],
+                    gems: ['La Banchina (tiny café with natural wine, harbor swim spot & wood-fired sauna)'],
+                    food: ['Sweet Treat', 'Broens Gadekøkken'],
+                    activities: ['Rent a kayak or GoBoat', 'Chill by the water at the Opera Park', 'Swim at La Banchina']
+                },
+                {
+                    id: 'frederiksstaden',
+                    name: '🏛️ Frederiksstaden',
+                    vibe: 'Grand and royal.',
+                    tags: ['classic', 'waterside', 'sightseeing'],
+                    sights: ['Amalienborg Palace', 'Marble Church', 'Waterfront promenade', 'Opera House'],
+                    food: ['Original Coffee (close to Amalienborg)', 'Toldboden'],
+                    activities: ['Walk along the promenade to Nyhavn', 'Take a harbor bus']
+                },
+                {
+                    id: 'vesterbro',
+                    name: '🎨 Vesterbro',
+                    vibe: 'Edgy, creative, young.',
+                    tags: ['edgy', 'artsy', 'foodie'],
+                    sights: ['Kødbyen (Meatpacking District)', 'Carlsberg City District', 'Enghaveparken'],
+                    gems: ['Absalon (former church turned community house)', 'Vester Kirkegård', 'V1 Gallery'],
+                    food: ['Kaffe', 'H15', 'Mother (sourdough pizza spot)'],
+                    activities: ['Catch an event or art show in Kødbyen', 'Rent bikes and explore the old brewery area']
+                },
+                {
+                    id: 'norrebro',
+                    name: '🌿 Nørrebro',
+                    vibe: 'Multicultural, youthful, creative.',
+                    tags: ['artsy', 'edgy', 'foodie', 'shopping'],
+                    sights: ['Superkilen', 'Assistens Cemetery', 'Jægersborggade'],
+                    gems: ['Palmspree (indie vinyl shop and coffee)', 'Nørrebrohallen (local sports center with indoor paddle)'],
+                    food: ['Andersen & Maillard', 'Coffee Collective', 'Manfreds'],
+                    activities: ['Walking/biking tour of Superkilen and local murals', 'Check if there’s a weekend flea market or event']
+                },
+                {
+                    id: 'osterbro',
+                    name: '🌳 Østerbro',
+                    vibe: 'Leafy, upscale, residential.',
+                    tags: ['classic', 'swimming'],
+                    sights: ['The Little Mermaid', 'Kastellet', 'Fælledparken'],
+                    gems: ['Svanemøllen Beach', 'The Laundromat Café'],
+                    food: ['Original Coffee (Trianglen)', 'Juno the Bakery', 'Kafferiet'],
+                    activities: ['Jog or picnic in Fælledparken', 'Chill beach day at Svanemøllen']
+                },
+                {
+                    id: 'brygge',
+                    name: '🏞️ Islands Brygge & Sydhavn',
+                    vibe: 'Modern, waterside, a mix of new urban and raw nature.',
+                    tags: ['waterside', 'swimming'],
+                    sights: ['Harbor Baths', 'Islands Brygge Park', 'Sydhavnstippen (with alpacas and sheep)'],
+                    gems: ['Moxy Hotel’s rooftop events during summer', 'Sauna-goose (floating sauna + winter swimming experiences)'],
+                    food: ['Café Alma', 'Riccos Brygge', 'Bølgen'],
+                    activities: ['Paddle tennis courts in the area', 'Run or bike along the harbor path', 'Sauna + swim session']
+                }
+            ];
+
+            const grid = document.getElementById('neighborhood-grid');
+            const filterButtons = document.querySelectorAll('.filter-btn');
+            let activeFilter = 'all';
+            let openCardId = null;
+
+            const renderCards = (filter = 'all') => {
+                grid.innerHTML = '';
+                const filteredData = filter === 'all' 
+                    ? neighborhoodData 
+                    : neighborhoodData.filter(n => n.tags.includes(filter));
+
+                if (filteredData.length === 0) {
+                    grid.innerHTML = `<p class="text-stone-500 text-center md:col-span-2 lg:col-span-3">No neighborhoods match your selection. Try a different filter.</p>`;
+                    return;
+                }
+
+                filteredData.forEach(n => {
+                    const card = document.createElement('div');
+                    card.className = 'card bg-white rounded-xl shadow-md overflow-hidden cursor-pointer hover:shadow-xl hover:-translate-y-1';
+                    card.dataset.id = n.id;
+                    
+                    const isOpen = n.id === openCardId;
+
+                    let detailsHTML = `
+                        <div class="p-4">
+                            ${n.sights ? `
+                                <h4 class="font-semibold text-teal-700 mt-3 mb-1">Top Sights</h4>
+                                <ul class="list-disc list-inside text-stone-600 text-sm">
+                                    ${n.sights.map(item => `<li>${item}</li>`).join('')}
+                                </ul>` : ''}
+                            ${n.gems ? `
+                                <h4 class="font-semibold text-teal-700 mt-3 mb-1">Hidden Gems</h4>
+                                <ul class="list-disc list-inside text-stone-600 text-sm">
+                                    ${n.gems.map(item => `<li>${item}</li>`).join('')}
+                                </ul>` : ''}
+                            ${n.food ? `
+                                <h4 class="font-semibold text-teal-700 mt-3 mb-1">Coffee & Food</h4>
+                                <ul class="list-disc list-inside text-stone-600 text-sm">
+                                    ${n.food.map(item => `<li>${item}</li>`).join('')}
+                                </ul>` : ''}
+                            ${n.activities ? `
+                                <h4 class="font-semibold text-teal-700 mt-3 mb-1">Activities</h4>
+                                <ul class="list-disc list-inside text-stone-600 text-sm">
+                                    ${n.activities.map(item => `<li>${item}</li>`).join('')}
+                                </ul>` : ''}
+                        </div>
+                    `;
+
+                    card.innerHTML = `
+                        <div class="p-6">
+                            <h3 class="text-2xl font-bold text-teal-800">${n.name}</h3>
+                            <p class="text-stone-500 italic">${n.vibe}</p>
+                        </div>
+                        <div class="details-content ${isOpen ? 'open' : ''}">${detailsHTML}</div>
+                    `;
+                    grid.appendChild(card);
+                });
+            };
+            
+            grid.addEventListener('click', (e) => {
+                const card = e.target.closest('.card');
+                if (card) {
+                    const cardId = card.dataset.id;
+                    if (openCardId === cardId) {
+                        openCardId = null; 
+                    } else {
+                        openCardId = cardId;
+                    }
+                    renderCards(activeFilter);
+                }
+            });
+
+            filterButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    activeFilter = button.dataset.filter;
+                    openCardId = null;
+                    filterButtons.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+                    renderCards(activeFilter);
+                });
+            });
+
+            // Removed Chart.js initialization code as the Vibe Overview section is removed.
+
+            renderCards();
+        });
+    </script>
+</body>
+</html>
+�
